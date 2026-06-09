@@ -17,16 +17,18 @@
         </div>
 
         <div id="message-overlay">
-            <h2 id="overlay-title">Pemberitahuan</h2>
-            <p id="overlay-text" style="margin: 15px 0; font-size: 16px;"></p>
-            
-            <div id="challenge-zone">
-                <p style="margin-bottom: 10px;">🧬 <strong>Selesaikan Hambatan:</strong> Ketik ulang untai DNA komplemen dari "<strong>ATG</strong>" untuk lolos!</p>
-                <input type="text" id="challenge-input" placeholder="Jawaban (3 Huruf Kapital)...">
-                <button id="challenge-btn" onclick="checkChallenge()">Kirim</button>
+            <div class="overlay-card">
+                <h2 id="overlay-title">Pemberitahuan</h2>
+                <p id="overlay-text" style="margin: 15px 0; font-size: 16px;"></p>
+                
+                <div id="challenge-zone">
+                    <p style="margin-bottom: 10px;">🧬 <strong>Selesaikan Hambatan:</strong> Ketik ulang untai DNA komplemen dari "<strong>ATG</strong>" untuk lolos!</p>
+                    <input type="text" id="challenge-input" placeholder="Jawaban (3 Huruf Kapital)...">
+                    <button id="challenge-btn" type="button" onclick="checkChallenge()">Kirim</button>
+                </div>
+                
+                <button id="overlay-close-btn" type="button" onclick="closeOverlay()">Lanjutkan</button>
             </div>
-            
-            <button id="overlay-close-btn" onclick="closeOverlay()">Lanjutkan</button>
         </div>
 
         <div id="screen-stage1" class="screen active">
@@ -46,7 +48,7 @@
             </div>
             
             <div class="drag-container">
-                <div class="draggable-items">
+                <div class="draggable-items" id="draggable-items">
                     <div class="drag-item" draggable="true" id="item1">Transkripsi</div>
                     <div class="drag-item" draggable="true" id="item2">Translasi</div>
                     <div class="drag-item" draggable="true" id="item3">Plasmid</div>
@@ -65,7 +67,7 @@
                 </div>
             </div>
 
-            <button onclick="checkDragDrop()">Selesai & Cek Jawaban</button>
+            <button type="button" onclick="checkDragDrop()">Selesai & Cek Jawaban</button>
         </div>
 
         <div id="screen-ending" class="screen">
@@ -78,9 +80,15 @@
             <h3 style="text-align: center; color: #ffb423; font-size: 24px;">
                 Total Hadiah (Prize Pool): <span id="final-prize">$0</span>
             </h3>
-            <button onclick="resetGame()">Main Lagi</button>
+            <button type="button" onclick="resetGame()">Main Lagi</button>
         </div>
 
+    </div>
+
+    <div id="joystick-container">
+        <div id="joystick-base" class="joystick-base">
+            <div id="joystick-thumb" class="joystick-thumb"></div>
+        </div>
     </div>
 
     <script src="script.js"></script>
