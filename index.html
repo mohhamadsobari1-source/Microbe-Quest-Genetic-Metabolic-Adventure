@@ -8,79 +8,50 @@
 </head>
 <body>
 
-    <h1>Microbe Bio-Adventure 🔬</h1>
+    <h1>Microbe Quest: Genetic & Metabolic Adventure</h1>
 
     <div id="game-container">
         <div class="info-bar">
-            <div>Fitur Kontrol: Gunakan <span style="color:#4ecca3">W-A-S-D</span> untuk Bergerak</div>
-            <div>Prize Pool: <span id="prize-count" style="color: #ffb423;">$0</span></div>
+            <div id="control-hint">Fitur Kontrol: <span id="control-method">W-A-S-D</span></div>
+            <div>Skor: <span id="score-count" style="color: #ffb423;">0</span> / 150</div>
         </div>
 
         <div id="message-overlay">
             <div class="overlay-card">
                 <h2 id="overlay-title">Pemberitahuan</h2>
                 <p id="overlay-text" style="margin: 15px 0; font-size: 16px;"></p>
-                
-                <div id="challenge-zone">
-                    <p style="margin-bottom: 10px;">🧬 <strong>Selesaikan Hambatan:</strong> Ketik ulang untai DNA komplemen dari "<strong>ATG</strong>" untuk lolos!</p>
-                    <input type="text" id="challenge-input" placeholder="Jawaban (3 Huruf Kapital)...">
-                    <button id="challenge-btn" type="button" onclick="checkChallenge()">Kirim</button>
-                </div>
-                
-                <button id="overlay-close-btn" type="button" onclick="closeOverlay()">Lanjutkan</button>
+                <button id="overlay-close-btn" type="button" onclick="closeOverlay()">Lanjut</button>
             </div>
         </div>
 
-        <div id="screen-stage1" class="screen active">
+        <div id="quiz-screen" class="screen active">
             <div class="question-box">
-                <strong>Misi 1 (Metabolisme):</strong> Manakah jalur metabolisme mikroba yang menghasilkan energi (ATP) paling banyak dalam kondisi aerob?
+                <div id="question-index">Soal 1 / 15</div>
+                <div id="question-text" style="margin-top:8px; font-size:18px; font-weight:700;"></div>
             </div>
+
             <div id="canvas-zone">
-                <div id="gate-A" class="gate">A. Fermentasi Asam Laktat</div>
-                <div id="gate-B" class="gate">B. Respirasi Aerob (Siklus Krebs & Transpor Elektron)</div>
+                <div id="gate-A" class="gate option" data-option="A">A</div>
+                <div id="gate-B" class="gate option" data-option="B">B</div>
+                <div id="gate-C" class="gate option" data-option="C">C</div>
+                <div id="gate-D" class="gate option" data-option="D">D</div>
                 <div id="player">👾</div>
             </div>
         </div>
 
-        <div id="screen-stage2" class="screen">
-            <div class="question-box">
-                <strong>Misi 2 (Genetika):</strong> Cocokkan komponen proses ekspresi genetik bakteri berikut ke tempat yang benar!
-            </div>
-            
-            <div class="drag-container">
-                <div class="draggable-items" id="draggable-items">
-                    <div class="drag-item" draggable="true" id="item1">Transkripsi</div>
-                    <div class="drag-item" draggable="true" id="item2">Translasi</div>
-                    <div class="drag-item" draggable="true" id="item3">Plasmid</div>
-                </div>
-
-                <div class="drop-zones">
-                    <div class="drop-target" data-match="item1">
-                        <span>Pernyataan 1:</span> Pembentukan mRNA dari cetakan DNA.
-                    </div>
-                    <div class="drop-target" data-match="item2">
-                        <span>Pernyataan 2:</span> Penerjemahan kodon menjadi asam amino di Ribosom.
-                    </div>
-                    <div class="drop-target" data-match="item3">
-                        <span>Pernyataan 3:</span> DNA sirkuler di luar kromosom bakteri.
-                    </div>
-                </div>
-            </div>
-
-            <button type="button" onclick="checkDragDrop()">Selesai & Cek Jawaban</button>
-        </div>
-
         <div id="screen-ending" class="screen">
             <div class="question-box" style="background: #4ecca3; color: #1a1a2e;">
-                <h2>🎉 Eksperimen Selesai! 🎉</h2>
+                <h2>MISI SELESAI!</h2>
             </div>
-            <p style="text-align: center; margin: 20px 0; font-size: 18px;">
-                Kamu berhasil menavigasi laboratorium mikrobiologi dan menyusun kode genetika dengan benar!
-            </p>
-            <h3 style="text-align: center; color: #ffb423; font-size: 24px;">
-                Total Hadiah (Prize Pool): <span id="final-prize">$0</span>
+            <div style="text-align:center; margin-top: 12px;">
+                <label>Nama Pemain: <input id="player-name" type="text" placeholder="Masukkan nama..." style="padding:6px 8px; border-radius:8px; border:1px solid rgba(0,0,0,0.1);"></label>
+            </div>
+            <h3 style="text-align: center; color: #ffb423; font-size: 22px; margin-top:12px;">
+                Skor Anda: <span id="final-score">0</span> / 150
             </h3>
-            <button type="button" onclick="resetGame()">Main Lagi</button>
+            <h4 style="text-align:center; color:#dfefff;" id="final-grade">Predikat: -</h4>
+            <p id="final-msg" style="text-align:center; color:#cfe8ff; margin:12px 20px;">Pesan motivasi akan muncul di sini.</p>
+            <div style="text-align:center; margin-top:14px;"><button type="button" onclick="resetGame()">Main Lagi</button></div>
         </div>
 
     </div>

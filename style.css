@@ -70,37 +70,38 @@ h1 {
 
 #canvas-zone {
   position: relative;
-  min-height: 350px;
-  background: linear-gradient(180deg, rgba(78,204,163,0.12) 0%, rgba(20,40,70,0.95) 100%);
-  border: 2px dashed rgba(255,255,255,0.12);
-  border-radius: 20px;
+  min-height: 360px;
+  background: linear-gradient(180deg, rgba(78,204,163,0.06) 0%, rgba(10,20,36,0.95) 100%);
+  border: 1px solid rgba(255,255,255,0.04);
+  border-radius: 16px;
   overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
 }
 
-.gate {
-  position: absolute;
-  width: calc(50% - 32px);
-  height: 90px;
+#canvas-zone .option {
+  width: 280px;
+  max-width: 44vw;
+  min-height: 72px;
+  margin: 10px;
   padding: 14px;
-  border-radius: 18px;
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.14);
-  color: #edf6f9;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  color: #eafcff;
   font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
 }
 
-#gate-A {
-  top: 20px;
-  left: 18px;
-  background: rgba(239,71,111,0.14);
-  border-color: rgba(239,71,111,0.28);
-}
-
-#gate-B {
-  top: 20px;
-  right: 18px;
-  background: rgba(78,204,163,0.16);
-  border-color: rgba(78,204,163,0.28);
+#canvas-zone {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
 }
 
 #player {
@@ -114,6 +115,37 @@ h1 {
   font-size: 32px;
   transition: transform 0.1s ease-out;
   user-select: none;
+}
+
+.question-box.centered {
+  text-align: center;
+}
+
+#options-zone {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.option-btn {
+  background: rgba(255,255,255,0.03);
+  color: #eafcff;
+  border: 1px solid rgba(255,255,255,0.06);
+  padding: 14px;
+  border-radius: 12px;
+  font-weight: 800;
+  text-align: left;
+}
+
+.option-btn.selected.correct {
+  background: linear-gradient(90deg, rgba(78,204,163,0.18), rgba(78,204,163,0.08));
+  border-color: rgba(78,204,163,0.4);
+}
+
+.option-btn.selected.wrong {
+  background: linear-gradient(90deg, rgba(239,71,111,0.12), rgba(239,71,111,0.06));
+  border-color: rgba(239,71,111,0.36);
 }
 
 button {
@@ -311,20 +343,11 @@ body.mobile #joystick-container {
 
   #canvas-zone {
     min-height: 300px;
+    grid-template-columns: 1fr;
   }
 
-  .gate {
-    width: calc(100% - 36px);
-    left: 18px !important;
-    right: auto !important;
-  }
-
-  #gate-B {
-    top: 130px;
-  }
-
-  #gate-A {
-    top: 20px;
+  #options-zone {
+    grid-template-columns: 1fr;
   }
 
   .drag-container {

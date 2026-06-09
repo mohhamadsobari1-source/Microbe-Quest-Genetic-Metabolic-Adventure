@@ -1,401 +1,212 @@
-const player = document.getElementById('player');
-const prizeCount = document.getElementById('prize-count');
-const finalPrize = document.getElementById('final-prize');
-const messageOverlay = document.getElementById('message-overlay');
-const overlayTitle = document.getElementById('overlay-title');
-const overlayText = document.getElementById('overlay-text');
-const overlayCloseBtn = document.getElementById('overlay-close-btn');
-const challengeZone = document.getElementById('challenge-zone');
-const challengeInput = document.getElementById('challenge-input');
-const canvasZone = document.getElementById('canvas-zone');
+// Microbe Quest - Quiz flow with WASD controls and mobile joystick
+
+const questions = [
+  {q: 'Materi genetik utama pada bakteri adalah...', opts: {A:'Protein',B:'RNA',C:'DNA kromosom sirkular',D:'Lipid'}, ans: 'C', icon:'🧬'},
+  {q: 'DNA ekstrakromosomal yang dapat bereplikasi sendiri disebut...', opts: {A:'Flagel',B:'Kapsul',C:'Plasmid',D:'Ribosom'}, ans: 'C', icon:'🧫'},
+  {q: 'Perpindahan DNA antar bakteri melalui kontak langsung disebut...', opts: {A:'Transformasi',B:'Konjugasi',C:'Transduksi',D:'Mutasi'}, ans: 'B', icon:'🔗'},
+  {q: 'Transfer gen menggunakan bakteriofag disebut...', opts: {A:'Konjugasi',B:'Mutasi',C:'Transduksi',D:'Transformasi'}, ans: 'C', icon:'🦠'},
+  {q: 'Pengambilan DNA bebas dari lingkungan oleh bakteri disebut...', opts: {A:'Transformasi',B:'Replikasi',C:'Translasi',D:'Fermentasi'}, ans: 'A', icon:'📥'},
+  {q: 'Enzim yang membuka untai DNA saat replikasi adalah...', opts: {A:'Ligase',B:'Helicase',C:'Primase',D:'Restriktase'}, ans: 'B', icon:'🧩'},
+  {q: 'Enzim utama sintesis DNA pada bakteri adalah...', opts: {A:'DNA Polimerase III',B:'RNA Polimerase',C:'Ligase',D:'Topoisomerase'}, ans: 'A', icon:'🔬'},
+  {q: 'Perubahan permanen pada urutan basa DNA disebut...', opts: {A:'Mutasi',B:'Replikasi',C:'Transkripsi',D:'Translasi'}, ans: 'A', icon:'⚠️'},
+  {q: 'Mutasi yang tidak mengubah asam amino disebut...', opts: {A:'Missense',B:'Nonsense',C:'Silent mutation',D:'Delesi'}, ans: 'C', icon:'🧾'},
+  {q: 'Proses pembentukan RNA dari DNA disebut...', opts: {A:'Translasi',B:'Transkripsi',C:'Replikasi',D:'Rekombinasi'}, ans: 'B', icon:'📜'},
+  {q: 'Operon yang mengatur metabolisme laktosa pada E. coli adalah...', opts: {A:'Operon lac',B:'Operon trp',C:'Operon his',D:'Operon ara'}, ans: 'A', icon:'🧪'},
+  {q: 'Gen resistensi antibiotik sering ditemukan pada...', opts: {A:'Dinding sel',B:'Sitoplasma',C:'Plasmid',D:'Membran sel'}, ans: 'C', icon:'💊'},
+  {q: 'Teknik untuk memperbanyak DNA secara cepat adalah...', opts: {A:'ELISA',B:'PCR',C:'Western Blot',D:'Fermentasi'}, ans: 'B', icon:'🧪'},
+  {q: 'Fungsi enzim restriksi adalah...', opts: {A:'Menyatukan DNA',B:'Memotong DNA pada situs tertentu',C:'Membentuk ATP',D:'Membentuk RNA'}, ans: 'B', icon:'✂️'},
+  {q: 'Penyisipan gen asing ke dalam bakteri disebut...', opts: {A:'Pasteurisasi',B:'Fermentasi',C:'Transformasi genetik',D:'Sterilisasi'}, ans: 'C', icon:'🔁'}
+];
+
+// DOM elements
+const questionIndexEl = document.getElementById('question-index');
+const questionTextEl = document.getElementById('question-text');
 const gateA = document.getElementById('gate-A');
 const gateB = document.getElementById('gate-B');
-const screenStage1 = document.getElementById('screen-stage1');
-const screenStage2 = document.getElementById('screen-stage2');
-const screenEnding = document.getElementById('screen-ending');
-const dragItems = Array.from(document.querySelectorAll('.drag-item'));
-const dropZones = Array.from(document.querySelectorAll('.drop-target'));
-const joystickContainer = document.getElementById('joystick-container');
+const gateC = document.getElementById('gate-C');
+const gateD = document.getElementById('gate-D');
+const player = document.getElementById('player');
+const scoreCount = document.getElementById('score-count');
+const quizScreen = document.getElementById('quiz-screen');
+const endingScreen = document.getElementById('screen-ending');
+const finalScoreEl = document.getElementById('final-score');
+const finalGradeEl = document.getElementById('final-grade');
+const finalMsgEl = document.getElementById('final-msg');
 const joystickBase = document.getElementById('joystick-base');
 const joystickThumb = document.getElementById('joystick-thumb');
-const infoBarText = document.querySelector('.info-bar div:first-child');
 
-let prizePool = 0;
-let movementLocked = false;
-let stage1Complete = false;
-let currentScreen = 'stage1';
-let playerPos = { x: 0, y: 0 };
-let keysDown = { w: false, a: false, s: false, d: false };
-let joystickDirection = { x: 0, y: 0 };
-let joystickActive = false;
+let current = 0;
+let score = 0;
+let acceptingInput = true;
 let pointerId = null;
-let activeTouchItem = null;
-let originalDragParent = null;
 
 function init() {
-  setDeviceMode();
-  setScreen('stage1');
-  resetPlayerPosition();
-  updatePrizeUI();
-  setupKeyboardControls();
-  setupJoystickControls();
-  setupDragAndDrop();
-  requestAnimationFrame(gameLoop);
+  document.body.classList.toggle('mobile', isMobile());
+  bindKeyboard();
+  bindJoystick();
+  bindOptionClicks();
+  renderQuestion();
 }
 
-function setDeviceMode() {
-  const isMobile = /Mobi|Android|iPhone|iPad|iPod|Tablet|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0;
-  document.body.classList.toggle('mobile', isMobile);
-  infoBarText.innerHTML = isMobile
-    ? 'Fitur Kontrol: Gunakan <span style="color:#4ecca3">Analog Virtual di bawah</span>'
-    : 'Fitur Kontrol: Gunakan <span style="color:#4ecca3">W-A-S-D</span> untuk Bergerak';
+function isMobile() {
+  return /Mobi|Android|iPhone|iPad|iPod|Tablet/i.test(navigator.userAgent) || window.matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0;
 }
 
-window.addEventListener('resize', setDeviceMode);
-
-function updatePrizeUI() {
-  prizeCount.textContent = `$${prizePool}`;
-  finalPrize.textContent = `$${prizePool}`;
+function renderQuestion() {
+  const q = questions[current];
+  questionIndexEl.textContent = `Soal ${current+1} / ${questions.length}`;
+  questionTextEl.innerHTML = `${q.icon} ${q.q}`;
+  gateA.innerHTML = `<strong>A.</strong> <span class="opt-text">${q.opts.A}</span>`;
+  gateB.innerHTML = `<strong>B.</strong> <span class="opt-text">${q.opts.B}</span>`;
+  gateC.innerHTML = `<strong>C.</strong> <span class="opt-text">${q.opts.C}</span>`;
+  gateD.innerHTML = `<strong>D.</strong> <span class="opt-text">${q.opts.D}</span>`;
+  acceptingInput = true;
 }
 
-function setScreen(stage) {
-  currentScreen = stage;
-  screenStage1.classList.toggle('active', stage === 'stage1');
-  screenStage2.classList.toggle('active', stage === 'stage2');
-  screenEnding.classList.toggle('active', stage === 'ending');
-  if (stage === 'stage1') {
-    movementLocked = false;
-    resetPlayerPosition();
-  }
-  if (stage === 'stage2') {
-    movementLocked = true;
-  }
-}
-
-function resetPlayerPosition() {
-  const zoneRect = canvasZone.getBoundingClientRect();
-  playerPos.x = zoneRect.width / 2 - 26;
-  playerPos.y = zoneRect.height - 88;
-  player.style.left = `${playerPos.x}px`;
-  player.style.top = `${playerPos.y}px`;
-}
-
-function gameLoop() {
-  if (currentScreen === 'stage1' && !movementLocked) {
-    handleMovement();
-    checkGateCollision();
-  }
-  requestAnimationFrame(gameLoop);
-}
-
-function handleMovement() {
-  const speed = 5;
-  let dx = 0;
-  let dy = 0;
-  if (keysDown.w) dy -= speed;
-  if (keysDown.s) dy += speed;
-  if (keysDown.a) dx -= speed;
-  if (keysDown.d) dx += speed;
-  if (joystickActive) {
-    dx += joystickDirection.x * speed;
-    dy += joystickDirection.y * speed;
-  }
-  if (dx !== 0 || dy !== 0) {
-    movePlayer(dx, dy);
-  }
-}
-
-function movePlayer(dx, dy) {
-  const zoneRect = canvasZone.getBoundingClientRect();
-  const playerRect = player.getBoundingClientRect();
-  playerPos.x = clamp(playerPos.x + dx, 0, zoneRect.width - playerRect.width);
-  playerPos.y = clamp(playerPos.y + dy, 0, zoneRect.height - playerRect.height);
-  player.style.left = `${playerPos.x}px`;
-  player.style.top = `${playerPos.y}px`;
-}
-
-function clamp(value, min, max) {
-  return Math.min(Math.max(value, min), max);
-}
-
-function checkGateCollision() {
-  if (stage1Complete) return;
-  const playerRect = player.getBoundingClientRect();
-  if (rectIntersect(playerRect, gateB.getBoundingClientRect())) {
-    stage1Complete = true;
-    prizePool += 75;
-    updatePrizeUI();
-    showOverlay(
-      'Jawaban Benar!',
-      'Kamu memilih jalur respirasi aerob yang benar. Prize Pool bertambah.',
-      false,
-      () => setScreen('stage2')
-    );
-  } else if (rectIntersect(playerRect, gateA.getBoundingClientRect())) {
-    movementLocked = true;
-    showOverlay(
-      'Ops! Salah Gerbang',
-      'Kamu masuk gerbang yang salah. Selesaikan hambatan agar bisa kembali bergerak.',
-      true
-    );
-  }
-}
-
-function rectIntersect(a, b) {
-  return !(a.right < b.left || a.left > b.right || a.bottom < b.top || a.top > b.bottom);
-}
-
-function showOverlay(title, text, showChallenge, onClose) {
-  overlayTitle.textContent = title;
-  overlayText.textContent = text;
-  challengeZone.style.display = showChallenge ? 'block' : 'none';
-  overlayCloseBtn.style.display = showChallenge ? 'none' : 'inline-block';
-  messageOverlay.classList.add('visible');
-  overlayCloseBtn.onclick = () => {
-    closeOverlay();
-    if (onClose) onClose();
-  };
-  if (showChallenge) {
-    challengeInput.value = '';
-    challengeInput.focus();
-  }
-}
-
-function closeOverlay() {
-  messageOverlay.classList.remove('visible');
-  overlayCloseBtn.style.display = 'inline-block';
-  overlayCloseBtn.onclick = closeOverlay;
-  if (currentScreen === 'stage1' && !stage1Complete) {
-    movementLocked = false;
-  }
-}
-
-function checkChallenge() {
-  const answer = challengeInput.value.trim().toUpperCase();
-  if (answer === 'TAC') {
-    showOverlay(
-      'Hebat!',
-      'Hambatan teratasi dan gerakan dibuka kembali. Arahkan mikroba ke gerbang yang benar.',
-      false
-    );
-  } else {
-    overlayText.textContent = 'Jawaban belum benar. Coba lagi! Pastikan mengetik untai komplemen DNA dengan benar.';
-    challengeInput.focus();
-  }
-}
-
-function setupKeyboardControls() {
-  window.addEventListener('keydown', (event) => {
-    if (currentScreen !== 'stage1' || movementLocked) return;
-    switch (event.key.toLowerCase()) {
-      case 'w':
-      case 'arrowup':
-        keysDown.w = true;
-        break;
-      case 'a':
-      case 'arrowleft':
-        keysDown.a = true;
-        break;
-      case 's':
-      case 'arrowdown':
-        keysDown.s = true;
-        break;
-      case 'd':
-      case 'arrowright':
-        keysDown.d = true;
-        break;
-    }
-  });
-
-  window.addEventListener('keyup', (event) => {
-    switch (event.key.toLowerCase()) {
-      case 'w':
-      case 'arrowup':
-        keysDown.w = false;
-        break;
-      case 'a':
-      case 'arrowleft':
-        keysDown.a = false;
-        break;
-      case 's':
-      case 'arrowdown':
-        keysDown.s = false;
-        break;
-      case 'd':
-      case 'arrowright':
-        keysDown.d = false;
-        break;
-    }
+function bindOptionClicks() {
+  [gateA, gateB, gateC, gateD].forEach(el => {
+    el.addEventListener('click', () => {
+      if (!acceptingInput) return;
+      handleChoice(el.dataset.option);
+    });
   });
 }
 
-function setupJoystickControls() {
-  if (!joystickBase || !joystickThumb) return;
-  joystickBase.addEventListener('pointerdown', (event) => {
-    event.preventDefault();
+// Keyboard controls (W/A/S/D) -> choose A/B/C/D respectively
+// Dokumentasi: event listener ini menangani input keyboard dari pengguna desktop.
+function bindKeyboard() {
+  window.addEventListener('keydown', (e) => {
+    if (!acceptingInput) return;
+    const k = e.key.toLowerCase();
+    if (k === 'w') return handleChoice('A');
+    if (k === 'a') return handleChoice('B');
+    if (k === 's') return handleChoice('C');
+    if (k === 'd') return handleChoice('D');
+  });
+}
+
+// Joystick handling for mobile: process pointerdown/move/up on the joystick base.
+// On pointerup we determine dominant direction and map to A/B/C/D (Up/Left/Down/Right).
+// Dokumentasi: joystick menghasilkan nilai arah yang diterjemahkan ke pilihan soal.
+function bindJoystick() {
+  if (!joystickBase) return;
+  joystickBase.addEventListener('pointerdown', (ev) => {
+    ev.preventDefault();
     if (pointerId !== null) return;
-    pointerId = event.pointerId;
+    pointerId = ev.pointerId;
     joystickBase.setPointerCapture(pointerId);
-    joystickActive = true;
-    processJoystickPointer(event);
+    processJoystick(ev);
   });
-
-  joystickBase.addEventListener('pointermove', (event) => {
-    if (event.pointerId !== pointerId) return;
-    processJoystickPointer(event);
+  joystickBase.addEventListener('pointermove', (ev) => {
+    if (ev.pointerId !== pointerId) return;
+    processJoystick(ev);
   });
-
-  joystickBase.addEventListener('pointerup', releaseJoystick);
-  joystickBase.addEventListener('pointercancel', releaseJoystick);
-  joystickBase.addEventListener('pointerleave', releaseJoystick);
+  const release = (ev) => {
+    if (ev.pointerId !== pointerId) return;
+    // determine final direction
+    const rect = joystickBase.getBoundingClientRect();
+    const cx = rect.left + rect.width/2;
+    const cy = rect.top + rect.height/2;
+    const dx = ev.clientX - cx;
+    const dy = ev.clientY - cy;
+    const absX = Math.abs(dx);
+    const absY = Math.abs(dy);
+    // threshold to avoid accidental taps
+    if (Math.hypot(dx,dy) > 20) {
+      let choice = null;
+      if (absX > absY) {
+        choice = dx > 0 ? 'D' : 'B';
+      } else {
+        choice = dy < 0 ? 'A' : 'C';
+      }
+      if (choice && acceptingInput) handleChoice(choice);
+    }
+    // reset thumb
+    joystickThumb.style.transform = 'translate(0,0)';
+    pointerId = null;
+  };
+  joystickBase.addEventListener('pointerup', release);
+  joystickBase.addEventListener('pointercancel', release);
+  joystickBase.addEventListener('pointerleave', release);
 }
 
-function processJoystickPointer(event) {
+function processJoystick(ev) {
   const rect = joystickBase.getBoundingClientRect();
-  const centerX = rect.left + rect.width / 2;
-  const centerY = rect.top + rect.height / 2;
-  const x = event.clientX - centerX;
-  const y = event.clientY - centerY;
-  const maxRadius = rect.width / 2 - 30;
-  const distance = Math.hypot(x, y);
-  const clampedDistance = Math.min(distance, maxRadius);
-  const angle = Math.atan2(y, x);
-  const normalizedX = (clampedDistance / maxRadius) * Math.cos(angle);
-  const normalizedY = (clampedDistance / maxRadius) * Math.sin(angle);
-  joystickDirection.x = normalizedX;
-  joystickDirection.y = normalizedY;
-  joystickThumb.style.transform = `translate(${normalizedX * maxRadius}px, ${normalizedY * maxRadius}px)`;
+  const cx = rect.left + rect.width/2;
+  const cy = rect.top + rect.height/2;
+  const dx = ev.clientX - cx;
+  const dy = ev.clientY - cy;
+  const max = rect.width/2 - 20;
+  const dist = Math.hypot(dx,dy);
+  const clampedX = (dx / Math.max(dist,1)) * Math.min(dist, max);
+  const clampedY = (dy / Math.max(dist,1)) * Math.min(dist, max);
+  joystickThumb.style.transform = `translate(${clampedX}px, ${clampedY}px)`;
 }
 
-function releaseJoystick() {
-  pointerId = null;
-  joystickActive = false;
-  joystickDirection = { x: 0, y: 0 };
-  joystickThumb.style.transform = 'translate(0, 0)';
-}
-
-function setupDragAndDrop() {
-  dragItems.forEach((item) => {
-    item.addEventListener('dragstart', dragStart);
-    item.addEventListener('dragend', dragEnd);
-    item.addEventListener('touchstart', touchStart, { passive: false });
-  });
-
-  dropZones.forEach((zone) => {
-    zone.addEventListener('dragover', dragOver);
-    zone.addEventListener('drop', dropItem);
-  });
-
-  window.addEventListener('touchmove', touchMove, { passive: false });
-  window.addEventListener('touchend', touchEnd);
-}
-
-function dragStart(event) {
-  event.dataTransfer.setData('text/plain', event.target.id);
-  setTimeout(() => event.target.classList.add('dragging'), 0);
-}
-
-function dragEnd(event) {
-  event.target.classList.remove('dragging');
-}
-
-function dragOver(event) {
-  event.preventDefault();
-}
-
-function dropItem(event) {
-  event.preventDefault();
-  const id = event.dataTransfer.getData('text/plain');
-  const dragged = document.getElementById(id);
-  if (dragged) {
-    event.currentTarget.appendChild(dragged);
-  }
-}
-
-function touchStart(event) {
-  event.preventDefault();
-  const touch = event.changedTouches[0];
-  activeTouchItem = event.currentTarget;
-  originalDragParent = activeTouchItem.parentElement;
-  activeTouchItem.classList.add('dragging-touch');
-  activeTouchItem.style.position = 'fixed';
-  activeTouchItem.style.left = `${touch.clientX - activeTouchItem.offsetWidth / 2}px`;
-  activeTouchItem.style.top = `${touch.clientY - activeTouchItem.offsetHeight / 2}px`;
-  activeTouchItem.style.pointerEvents = 'none';
-}
-
-function touchMove(event) {
-  if (!activeTouchItem) return;
-  event.preventDefault();
-  const touch = event.changedTouches[0];
-  activeTouchItem.style.left = `${touch.clientX - activeTouchItem.offsetWidth / 2}px`;
-  activeTouchItem.style.top = `${touch.clientY - activeTouchItem.offsetHeight / 2}px`;
-}
-
-function touchEnd(event) {
-  if (!activeTouchItem) return;
-  event.preventDefault();
-  const touch = event.changedTouches[0];
-  const target = document.elementFromPoint(touch.clientX, touch.clientY);
-  const validZone = target && target.closest('.drop-target');
-  if (validZone) {
-    validZone.appendChild(activeTouchItem);
+function handleChoice(choice) {
+  acceptingInput = false;
+  const q = questions[current];
+  const isCorrect = choice === q.ans;
+  // highlight
+  clearHighlights();
+  const el = document.querySelector(`#gate-${choice}`);
+  if (el) el.classList.add('selected', isCorrect ? 'correct' : 'wrong');
+  if (isCorrect) {
+    score += 10;
+    scoreCount.textContent = score;
+    showFeedback('Benar! +10 poin');
   } else {
-    document.getElementById('draggable-items').appendChild(activeTouchItem);
+    showFeedback('Salah. +0 poin');
   }
-  activeTouchItem.classList.remove('dragging-touch');
-  activeTouchItem.style.position = 'static';
-  activeTouchItem.style.left = '';
-  activeTouchItem.style.top = '';
-  activeTouchItem.style.pointerEvents = 'auto';
-  activeTouchItem = null;
-  originalDragParent = null;
+  // next
+  setTimeout(() => {
+    current++;
+    if (current >= questions.length) {
+      endQuiz();
+    } else {
+      renderQuestion();
+      clearHighlights();
+    }
+  }, 700);
 }
 
-function checkDragDrop() {
-  const correct = dropZones.every((zone) => {
-    const match = zone.dataset.match;
-    const child = zone.querySelector('.drag-item');
-    return child && child.id === match;
+function clearHighlights() {
+  [gateA, gateB, gateC, gateD].forEach(g => {
+    g.classList.remove('selected','correct','wrong');
   });
-
-  if (correct) {
-    prizePool += 100;
-    updatePrizeUI();
-    showOverlay(
-      'Jawaban Tepat!',
-      'Semua pasangan cocok dengan benar. Segera lihat ringkasan akhir permainan.',
-      false,
-      () => setScreen('ending')
-    );
-  } else {
-    showOverlay('Masih Ada yang Kurang', 'Beberapa pasangan belum tepat. Periksa kembali dan coba lagi.', false);
-  }
 }
 
-function resetDragItems() {
-  const container = document.getElementById('draggable-items');
-  container.appendChild(document.getElementById('item1'));
-  container.appendChild(document.getElementById('item2'));
-  container.appendChild(document.getElementById('item3'));
+function showFeedback(text) {
+  const fb = document.getElementById('feedback');
+  fb.textContent = text;
+  setTimeout(() => { if (fb.textContent === text) fb.textContent = ''; }, 900);
+}
+
+function endQuiz() {
+  quizScreen.classList.remove('active');
+  endingScreen.classList.add('active');
+  finalScoreEl.textContent = score;
+  // determine predicate
+  let pred = '';
+  let msg = '';
+  if (score >= 140) { pred = '🏆 Master Genetika Mikrobiologi'; msg = 'Luar biasa! Anda menguasai konsep genetika mikrobiologi dengan sangat baik.'; }
+  else if (score >= 120) { pred = '🥇 Ahli Genetika'; msg = 'Kerja bagus! Pengetahuan Anda sudah berada di tingkat lanjut.'; }
+  else if (score >= 100) { pred = '🥈 Peneliti Muda'; msg = 'Bagus! Terus tingkatkan pemahaman Anda mengenai genetika mikroba.'; }
+  else if (score >= 70) { pred = '🥉 Asisten Laboratorium'; msg = 'Anda sudah memahami dasar-dasarnya, namun masih perlu pendalaman materi.'; }
+  else { pred = '📚 Perlu Belajar Lagi'; msg = 'Jangan menyerah! Pelajari kembali konsep genetika mikrobiologi dan coba lagi.'; }
+  finalGradeEl.textContent = `Predikat: ${pred}`;
+  finalMsgEl.textContent = msg;
 }
 
 function resetGame() {
-  prizePool = 0;
-  movementLocked = false;
-  stage1Complete = false;
-  keysDown = { w: false, a: false, s: false, d: false };
-  joystickDirection = { x: 0, y: 0 };
-  setScreen('stage1');
-  resetPlayerPosition();
-  updatePrizeUI();
-  resetDragItems();
-  closeOverlay();
+  current = 0;
+  score = 0;
+  scoreCount.textContent = score;
+  endingScreen.classList.remove('active');
+  quizScreen.classList.add('active');
+  renderQuestion();
 }
 
-window.checkDragDrop = checkDragDrop;
 window.resetGame = resetGame;
-window.closeOverlay = closeOverlay;
-window.checkChallenge = checkChallenge;
 
 init();
