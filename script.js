@@ -396,6 +396,7 @@ document.addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
 
 // ===== DRAG DROP =====
 let dragItem = null, dragOrigin = null;
+let dragEl = null;
 
 function loadDDQ() {
   const q = ddQuestions[ddCurrentIdx % ddQuestions.length];
@@ -441,25 +442,38 @@ function createDDItem(text, origin) {
   // Pointer support: set drag origin for touch/pointer interactions
   el.addEventListener('pointerdown', e => { dragItem = text; dragOrigin = el.parentElement; el.classList.add('dragging'); e.preventDefault(); });
   el.addEventListener('pointerup', e => { /* pointerup handled by zone/bank handlers */ });
-  el.addEventListener('pointercancel', () => { dragItem = null; dragOrigin = null; el.classList.remove('dragging'); });
+  el.addEventListener('pointercancel', () => { dragItem = null; dragOrigin = null; if (el) el.classList.remove('dragging'); dragEl = null; });
+  // store reference to element being dragged
+  el.addEventListener('pointerdown', () => { dragEl = el; });
   el.addEventListener('dragend', () => el.classList.remove('dragging'));
   return el;
 }
 
 function dropToZone(zoneEl) {
   if (!dragItem) return;
-  if (dragOrigin) {
-    const existing = dragOrigin.querySelector(`[data-item="${CSS.escape(dragItem)}"]`);
-    if (existing) existing.remove();
-  }
-  // Remove from any zone it was already in
+  // Move existing element if present, otherwise create
+  let existing = null;
+  if (dragEl && dragEl.dataset && dragEl.dataset.item === dragItem) existing = dragEl;
+  if (!existing && dragOrigin) existing = dragOrigin.querySelector(`[data-item="${CSS.escape(dragItem)}"]`);
+  // Remove any other duplicates in zones
   document.querySelectorAll('.dd-zone').forEach(z => {
     const it = z.querySelector(`[data-item="${CSS.escape(dragItem)}"]`);
-    if (it) it.remove();
+    if (it && it !== existing) it.remove();
   });
-  const newEl = createDDItem(dragItem, 'zone');
-  zoneEl.appendChild(newEl);
-  dragItem = null; dragOrigin = null;
+  if (dragOrigin && dragOrigin !== zoneEl) {
+    const it = dragOrigin.querySelector(`[data-item="${CSS.escape(dragItem)}"]`);
+    if (it && it !== existing) it.remove();
+  }
+  if (existing) {
+    // move node
+    zoneEl.appendChild(existing);
+    existing.dataset.origin = 'zone';
+    existing.classList.remove('dragging');
+  } else {
+    const newEl = createDDItem(dragItem, 'zone');
+    zoneEl.appendChild(newEl);
+  }
+  dragItem = null; dragOrigin = null; dragEl = null;
 }
 
 // Allow dropping back to bank
@@ -467,25 +481,60 @@ document.getElementById('dd-bank').addEventListener('dragover', e => e.preventDe
 document.getElementById('dd-bank').addEventListener('drop', e => {
   e.preventDefault();
   if (!dragItem) return;
+  // Move existing element back to bank if present
+  let existing = null;
+  if (dragEl && dragEl.dataset && dragEl.dataset.item === dragItem) existing = dragEl;
+  if (!existing && dragOrigin) existing = dragOrigin.querySelector(`[data-item="${CSS.escape(dragItem)}"]`);
+  // remove from any zones
   document.querySelectorAll('.dd-zone').forEach(z => {
     const it = z.querySelector(`[data-item="${CSS.escape(dragItem)}"]`);
-    if (it) it.remove();
+    if (it && it !== existing) it.remove();
   });
-  const newEl = createDDItem(dragItem, 'bank');
-  document.getElementById('dd-bank').appendChild(newEl);
-  dragItem = null;
+  if (existing) {
+    document.getElementById('dd-bank').appendChild(existing);
+    existing.dataset.origin = 'bank';
+    existing.classList.remove('dragging');
+  } else {
+    const newEl = createDDItem(dragItem, 'bank');
+    document.getElementById('dd-bank').appendChild(newEl);
+  }
+  dragItem = null; dragOrigin = null; dragEl = null;
 });
 // pointerup on bank to support touch devices
 document.getElementById('dd-bank').addEventListener('pointerup', e => {
   e.preventDefault();
   if (!dragItem) return;
+  let existing = null;
+  if (dragEl && dragEl.dataset && dragEl.dataset.item === dragItem) existing = dragEl;
+  if (!existing && dragOrigin) existing = dragOrigin.querySelector(`[data-item="${CSS.escape(dragItem)}"]`);
   document.querySelectorAll('.dd-zone').forEach(z => {
     const it = z.querySelector(`[data-item="${CSS.escape(dragItem)}"]`);
-    if (it) it.remove();
+    if (it && it !== existing) it.remove();
   });
-  const newEl = createDDItem(dragItem, 'bank');
-  document.getElementById('dd-bank').appendChild(newEl);
-  dragItem = null; dragOrigin = null;
+  if (existing) {
+    document.getElementById('dd-bank').appendChild(existing);
+    existing.dataset.origin = 'bank';
+    existing.classList.remove('dragging');
+  } else {
+    const newEl = createDDItem(dragItem, 'bank');
+    document.getElementById('dd-bank').appendChild(newEl);
+  }
+  dragItem = null; dragOrigin = null; dragEl = null;
+});
+
+// Cancel drag if pointer is released anywhere outside bank/zones
+document.addEventListener('pointerup', (e) => {
+  if (!dragItem) return;
+  const zonesContainer = document.getElementById('dd-zones-container');
+  const bank = document.getElementById('dd-bank');
+  const target = e.target;
+  if (zonesContainer && (zonesContainer.contains(target) || bank.contains(target))) {
+    // handled by specific handlers
+    return;
+  }
+  // Cancel drag: remove dragging state, keep element in origin
+  if (dragEl) dragEl.classList.remove('dragging');
+  dragItem = null; dragOrigin = null; dragEl = null;
 });
 
 function checkDragDrop() {
