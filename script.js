@@ -664,9 +664,7 @@ window.startGame = startGame;
 window.goMenu = goMenu;
 window.checkDragDrop = checkDragDrop;
 
-// Movement keys (already used by loop)
-document.addEventListener('keydown', e => { keys[e.key.toLowerCase()] = true; if (['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright'].includes(e.key.toLowerCase())) e.preventDefault(); });
-document.addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
+// Movement keys are handled with guarded listeners earlier (respecting inputs/menu)
 
 // Analog joystick state
 let joy = { x: 0, y: 0, active: false };
