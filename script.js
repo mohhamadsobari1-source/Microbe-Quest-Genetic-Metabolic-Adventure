@@ -210,10 +210,17 @@ function loop() {
   canvas.width = CANVAS_W; canvas.height = CANVAS_H;
 
   // Move player
+  // Keyboard movement
   if (keys['w'] || keys['arrowup'])    player.vy -= SPEED;
   if (keys['s'] || keys['arrowdown'])  player.vy += SPEED;
   if (keys['a'] || keys['arrowleft'])  player.vx -= SPEED;
   if (keys['d'] || keys['arrowright']) player.vx += SPEED;
+  // Analog joystick movement (additive)
+  if (typeof joy !== 'undefined' && (joy.x !== 0 || joy.y !== 0)) {
+    // joy.x: left(-1) -> right(+1); joy.y: up(-1) -> down(+1)
+    player.vx += joy.x * SPEED * 0.9;
+    player.vy += joy.y * SPEED * 0.9;
+  }
   player.vx *= FRICTION; player.vy *= FRICTION;
   if (Math.abs(player.vx) < 0.05) player.vx = 0;
   if (Math.abs(player.vy) < 0.05) player.vy = 0;
