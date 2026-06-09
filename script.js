@@ -439,12 +439,34 @@ function createDDItem(text, origin) {
     el.classList.add('dragging');
     e.dataTransfer.effectAllowed = 'move';
   });
-  // Pointer support: set drag origin for touch/pointer interactions
-  el.addEventListener('pointerdown', e => { dragItem = text; dragOrigin = el.parentElement; el.classList.add('dragging'); e.preventDefault(); });
-  el.addEventListener('pointerup', e => { /* pointerup handled by zone/bank handlers */ });
-  el.addEventListener('pointercancel', () => { dragItem = null; dragOrigin = null; if (el) el.classList.remove('dragging'); dragEl = null; });
-  // store reference to element being dragged
-  el.addEventListener('pointerdown', () => { dragEl = el; });
+  // Pointer support: create ghost preview and hide original for touch drag
+  el.addEventListener('pointerdown', e => {
+    dragItem = text;
+    dragOrigin = el.parentElement;
+    dragEl = el;
+    el.classList.add('dragging');
+    e.preventDefault();
+    // create ghost
+    if (dragGhost) { dragGhost.remove(); dragGhost = null; }
+    dragGhost = el.cloneNode(true);
+    dragGhost.classList.add('dd-ghost');
+    const r = el.getBoundingClientRect();
+    dragGhost.style.width = r.width + 'px';
+    dragGhost.style.height = r.height + 'px';
+    dragGhost.style.left = e.clientX + 'px';
+    dragGhost.style.top = e.clientY + 'px';
+    document.body.appendChild(dragGhost);
+    el.style.visibility = 'hidden';
+    // capture pointer so move/up go to element
+    if (el.setPointerCapture) el.setPointerCapture(e.pointerId);
+  });
+  el.addEventListener('pointerup', e => { /* handled globally or by zone/bank */ });
+  el.addEventListener('pointercancel', () => {
+    if (el) el.classList.remove('dragging');
+    if (dragEl) dragEl.style.visibility = '';
+    dragItem = null; dragOrigin = null; dragEl = null;
+    if (dragGhost) { dragGhost.remove(); dragGhost = null; }
+  });
   el.addEventListener('dragend', () => el.classList.remove('dragging'));
   return el;
 }
@@ -469,10 +491,12 @@ function dropToZone(zoneEl) {
     zoneEl.appendChild(existing);
     existing.dataset.origin = 'zone';
     existing.classList.remove('dragging');
+    if (existing.style) existing.style.visibility = '';
   } else {
     const newEl = createDDItem(dragItem, 'zone');
     zoneEl.appendChild(newEl);
   }
+  if (dragGhost) { dragGhost.remove(); dragGhost = null; }
   dragItem = null; dragOrigin = null; dragEl = null;
 }
 
@@ -519,6 +543,8 @@ document.getElementById('dd-bank').addEventListener('pointerup', e => {
     const newEl = createDDItem(dragItem, 'bank');
     document.getElementById('dd-bank').appendChild(newEl);
   }
+  if (dragEl) dragEl.style.visibility = '';
+  if (dragGhost) { dragGhost.remove(); dragGhost = null; }
   dragItem = null; dragOrigin = null; dragEl = null;
 });
 
@@ -533,8 +559,25 @@ document.addEventListener('pointerup', (e) => {
     return;
   }
   // Cancel drag: remove dragging state, keep element in origin
-  if (dragEl) dragEl.classList.remove('dragging');
+  if (dragEl) { dragEl.classList.remove('dragging'); dragEl.style.visibility = ''; }
+  if (dragGhost) { dragGhost.remove(); dragGhost = null; }
   dragItem = null; dragOrigin = null; dragEl = null;
+  // remove any zone highlight
+  document.querySelectorAll('.dd-zone').forEach(z => z.classList.remove('drag-over'));
+});
+
+// global pointermove to move ghost and highlight zones
+document.addEventListener('pointermove', (e) => {
+  if (!dragItem || !dragGhost) return;
+  dragGhost.style.left = e.clientX + 'px';
+  dragGhost.style.top = e.clientY + 'px';
+  // highlight zone under pointer
+  const elUnder = document.elementFromPoint(e.clientX, e.clientY);
+  document.querySelectorAll('.dd-zone').forEach(z => z.classList.remove('drag-over'));
+  if (!elUnder) return;
+  const zone = elUnder.closest('.dd-zone');
+  if (zone) zone.classList.add('drag-over');
+  else if (elUnder.id === 'dd-bank' || elUnder.closest('#dd-bank')) document.getElementById('dd-bank').classList.add('drag-over');
 });
 
 function checkDragDrop() {

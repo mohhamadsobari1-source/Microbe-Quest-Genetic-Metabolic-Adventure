@@ -45,6 +45,9 @@ body { font-family: var(--font-sans, sans-serif); background: transparent; }
 .dd-item:active { cursor: grabbing; opacity: 0.7; transform: scale(0.97); }
 .dd-item.dragging { opacity: 0.4; }
 .dd-item { touch-action: none; }
+
+/* ghost drag preview */
+.dd-ghost { position: fixed; pointer-events: none; z-index: 9999; opacity: 0.95; transform: translate(-50%,-50%); box-shadow: 0 8px 20px rgba(0,0,0,0.4); }
 .dd-zone { border: 2px dashed rgba(93,202,165,0.3); border-radius: 10px; padding: 10px; margin-bottom: 10px; min-height: 52px; transition: all 0.2s; background: rgba(0,0,0,0.2); }
 .dd-zone.drag-over { border-color: #5DCAA5; background: rgba(93,202,165,0.08); }
 .dd-zone-label { font-size: 12px; color: #5DCAA5; margin-bottom: 6px; font-weight: 500; }
