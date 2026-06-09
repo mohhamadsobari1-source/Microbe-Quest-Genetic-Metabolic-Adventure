@@ -395,12 +395,14 @@ function isTyping() {
   return tag === 'INPUT' || tag === 'TEXTAREA' || el.isContentEditable;
 }
 document.addEventListener('keydown', e => {
-  if (isTyping()) return; // allow typing into inputs (e.g. name field)
+  // If menu is active or user is typing in an input, don't treat keys as movement
+  const menuEl = document.getElementById('menu');
+  if ((menuEl && menuEl.classList.contains('active')) || isTyping()) return;
   const k = e.key.toLowerCase();
   keys[k] = true;
   if (['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright'].includes(k)) e.preventDefault();
 });
-document.addEventListener('keyup', e => { if (isTyping()) return; keys[e.key.toLowerCase()] = false; });
+document.addEventListener('keyup', e => { const menuEl = document.getElementById('menu'); if ((menuEl && menuEl.classList.contains('active')) || isTyping()) return; keys[e.key.toLowerCase()] = false; });
 
 // ===== DRAG DROP =====
 let dragItem = null, dragOrigin = null;
