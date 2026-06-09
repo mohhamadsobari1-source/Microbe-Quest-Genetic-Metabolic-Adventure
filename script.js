@@ -88,6 +88,8 @@ function bindKeyboard() {
     if (k === 'a' || k === 'arrowleft') keysDown.a = true;
     if (k === 's' || k === 'arrowdown') keysDown.s = true;
     if (k === 'd' || k === 'arrowright') keysDown.d = true;
+    // immediate response for keyboard so user sees movement without waiting frame
+    applyMovementOnce();
   });
   window.addEventListener('keyup', (e) => {
     const k = e.key.toLowerCase();
@@ -114,6 +116,8 @@ function bindJoystick() {
   joystickBase.addEventListener('pointermove', (ev) => {
     if (ev.pointerId !== pointerId) return;
     processJoystick(ev);
+    // apply small immediate movement for mobile responsiveness
+    applyMovementOnce();
   });
   const release = (ev) => {
     if (ev.pointerId !== pointerId) return;
@@ -256,6 +260,25 @@ function mainLoop() {
     checkGateCollisions();
   }
   rafId = requestAnimationFrame(mainLoop);
+}
+
+// Apply one-step movement immediately for responsiveness (called on keydown/pointermove)
+function applyMovementOnce() {
+  if (!gameStarted || !document.getElementById('quiz-screen').classList.contains('active')) return;
+  const speed = 4.0;
+  let dx = 0, dy = 0;
+  if (keysDown.w) dy -= speed;
+  if (keysDown.s) dy += speed;
+  if (keysDown.a) dx -= speed;
+  if (keysDown.d) dx += speed;
+  if (joystickActive) {
+    dx += joystickVector.x * speed * 1.2;
+    dy += joystickVector.y * speed * 1.2;
+  }
+  if (dx !== 0 || dy !== 0) {
+    movePlayer(dx, dy);
+    checkGateCollisions();
+  }
 }
 
 // movement helpers
