@@ -388,11 +388,19 @@ document.getElementById('arena-canvas').addEventListener('click', (e) => {
 });
 
 // Keyboard
+function isTyping() {
+  const el = document.activeElement;
+  if (!el) return false;
+  const tag = el.tagName;
+  return tag === 'INPUT' || tag === 'TEXTAREA' || el.isContentEditable;
+}
 document.addEventListener('keydown', e => {
-  keys[e.key.toLowerCase()] = true;
-  if (['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright'].includes(e.key.toLowerCase())) e.preventDefault();
+  if (isTyping()) return; // allow typing into inputs (e.g. name field)
+  const k = e.key.toLowerCase();
+  keys[k] = true;
+  if (['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright'].includes(k)) e.preventDefault();
 });
-document.addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
+document.addEventListener('keyup', e => { if (isTyping()) return; keys[e.key.toLowerCase()] = false; });
 
 // ===== DRAG DROP =====
 let dragItem = null, dragOrigin = null;
