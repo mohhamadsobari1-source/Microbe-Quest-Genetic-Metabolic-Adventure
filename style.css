@@ -88,27 +88,39 @@ h1 {
 }
 
 #canvas-zone .option {
-  width: 280px;
-  max-width: 44vw;
-  min-height: 72px;
-  margin: 10px;
+  width: 40vw;
+  max-width: 320px;
+  min-height: 90px;
   padding: 14px;
   border-radius: 12px;
-  background: rgba(255,255,255,0.03);
+  background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.06);
   color: #eafcff;
   font-weight: 700;
   display: flex;
   align-items: center;
-  justify-content: flex-start;
-  gap: 12px;
+  justify-content: center;
+  text-align: center;
 }
 
 #canvas-zone {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
+  display: block;
+  position: relative;
+  min-height: calc(100vh - 220px);
 }
+
+/* corner positioning */
+.corner { position: absolute; width: 40vw; max-width:320px; }
+.corner.tl { top: 18px; left: 18px; }
+.corner.tr { top: 18px; right: 18px; }
+.corner.bl { bottom: 18px; left: 18px; }
+.corner.br { bottom: 18px; right: 18px; }
+
+.gate.option::before { content: attr(data-option) ". "; margin-right:6px; font-weight:900; }
+
+#select-hint { text-align:center; margin-top:8px; color:#dff6ea; font-weight:700; }
+.hidden { display:none !important; }
+#select-btn { padding:10px 16px; border-radius:10px; }
 
 #player {
   position: absolute;
@@ -363,7 +375,7 @@ body.mobile #joystick-container {
 
   #canvas-zone {
     min-height: 300px;
-    grid-template-columns: 1fr;
+    position: relative;
   }
 
   #options-zone {

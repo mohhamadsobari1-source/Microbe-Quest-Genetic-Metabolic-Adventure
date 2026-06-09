@@ -44,6 +44,7 @@ let keysDown = { w:false, a:false, s:false, d:false };
 let joystickVector = { x:0, y:0 };
 let joystickActive = false;
 let rafId = null;
+let currentOverlap = null; // which gate the player is currently overlapping
 
 function init() {
   document.body.classList.toggle('mobile', isMobile());
@@ -73,6 +74,7 @@ function bindOptionClicks() {
   [gateA, gateB, gateC, gateD].forEach(el => {
     el.addEventListener('click', () => {
       if (!acceptingInput || !gameStarted) return;
+      // direct click still selects immediately
       handleChoice(el.dataset.option);
     });
   });
@@ -308,20 +310,48 @@ function movePlayer(dx, dy) {
 }
 
 function checkGateCollisions() {
-  if (!acceptingInput) return;
   const p = document.getElementById('player');
   const playerRect = p.getBoundingClientRect();
   const gates = [gateA, gateB, gateC, gateD];
+  let found = null;
   for (const g of gates) {
     if (!g) continue;
     const gr = g.getBoundingClientRect();
     if (!(playerRect.right < gr.left || playerRect.left > gr.right || playerRect.bottom < gr.top || playerRect.top > gr.bottom)) {
-      // collision
-      handleChoice(g.dataset.option);
+      found = g;
       break;
     }
   }
+  if (found) {
+    // show hint and set overlap
+    currentOverlap = found.dataset.option;
+    document.getElementById('hint-opt').textContent = currentOverlap;
+    document.getElementById('select-hint').classList.remove('hidden');
+    document.getElementById('select-btn').classList.remove('hidden');
+    // highlight
+    clearHighlights();
+    found.classList.add('selected');
+  } else {
+    currentOverlap = null;
+    document.getElementById('select-hint').classList.add('hidden');
+    document.getElementById('select-btn').classList.add('hidden');
+    clearHighlights();
+  }
 }
+
+// confirm selection via keyboard or button when overlapping
+window.addEventListener('keydown', (e) => {
+  if (!gameStarted) return;
+  if (!currentOverlap) return;
+  if (!acceptingInput) return;
+  if (e.code === 'Space' || e.key === 'Enter') {
+    handleChoice(currentOverlap);
+  }
+});
+
+document.getElementById('select-btn').addEventListener('click', () => {
+  if (currentOverlap && acceptingInput) handleChoice(currentOverlap);
+});
 
 // Initialize after definitions
 init();

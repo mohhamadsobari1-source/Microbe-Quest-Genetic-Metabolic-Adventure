@@ -41,12 +41,14 @@
             </div>
 
             <div id="canvas-zone">
-                <div id="gate-A" class="gate option" data-option="A">A</div>
-                <div id="gate-B" class="gate option" data-option="B">B</div>
-                <div id="gate-C" class="gate option" data-option="C">C</div>
-                <div id="gate-D" class="gate option" data-option="D">D</div>
+                <div id="gate-A" class="gate option corner tl" data-option="A"></div>
+                <div id="gate-B" class="gate option corner tr" data-option="B"></div>
+                <div id="gate-C" class="gate option corner bl" data-option="C"></div>
+                <div id="gate-D" class="gate option corner br" data-option="D"></div>
                 <div id="player">👾</div>
             </div>
+            <div id="select-hint" class="hidden">Di atas pilihan: <span id="hint-opt">-</span> — Tekan <strong>Space</strong> atau <strong>Enter</strong> untuk memilih, atau ketuk tombol Pilih.</div>
+            <div style="text-align:center; margin-top:10px;"><button id="select-btn" type="button" class="hidden">Pilih</button></div>
         </div>
 
         <div id="screen-ending" class="screen">
