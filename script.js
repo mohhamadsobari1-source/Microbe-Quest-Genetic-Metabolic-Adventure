@@ -559,19 +559,40 @@ window.checkDragDrop = checkDragDrop;
 document.addEventListener('keydown', e => { keys[e.key.toLowerCase()] = true; if (['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright'].includes(e.key.toLowerCase())) e.preventDefault(); });
 document.addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
 
-// Mobile joystick buttons
-function bindJoyBtn(id, key) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.addEventListener('pointerdown', e => { keys[key] = true; e.preventDefault(); });
-  el.addEventListener('pointerup', e => { keys[key] = false; e.preventDefault(); });
-  el.addEventListener('pointercancel', e => { keys[key] = false; });
-  el.addEventListener('pointerleave', e => { keys[key] = false; });
+// Analog joystick state
+let joy = { x: 0, y: 0, active: false };
+
+function initJoystick() {
+  const outer = document.getElementById('joy-outer');
+  const knob = document.getElementById('joy-knob');
+  if (!outer || !knob) return;
+  const rect = () => outer.getBoundingClientRect();
+  let pointerId = null;
+
+  outer.addEventListener('pointerdown', e => {
+    outer.setPointerCapture(e.pointerId);
+    pointerId = e.pointerId;
+    joy.active = true;
+    moveKnob(e);
+  });
+  outer.addEventListener('pointermove', e => { if (!joy.active || e.pointerId !== pointerId) return; moveKnob(e); });
+  outer.addEventListener('pointerup', e => { if (e.pointerId !== pointerId) return; outer.releasePointerCapture(pointerId); pointerId = null; joy.active = false; joy.x = 0; joy.y = 0; knob.style.transform = 'translate(0px,0px)'; });
+  outer.addEventListener('pointercancel', e => { if (e.pointerId !== pointerId) return; outer.releasePointerCapture(pointerId); pointerId = null; joy.active = false; joy.x = 0; joy.y = 0; knob.style.transform = 'translate(0px,0px)'; });
+
+  function moveKnob(e) {
+    const r = rect();
+    const cx = r.left + r.width/2; const cy = r.top + r.height/2;
+    const dx = e.clientX - cx; const dy = e.clientY - cy;
+    const max = (r.width/2) - 20; // max knob travel
+    const nx = Math.max(-1, Math.min(1, dx / max));
+    const ny = Math.max(-1, Math.min(1, dy / max));
+    joy.x = nx; joy.y = ny;
+    knob.style.transform = `translate(${nx * max}px, ${ny * max}px)`;
+  }
 }
-bindJoyBtn('joy-up', 'w');
-bindJoyBtn('joy-left', 'a');
-bindJoyBtn('joy-down', 's');
-bindJoyBtn('joy-right', 'd');
+
+// initialize joystick after DOM ready
+window.addEventListener('load', initJoystick);
 
 // Initialize default menu state
 showScreen('menu');

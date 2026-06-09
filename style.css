@@ -91,10 +91,10 @@ body { font-family: var(--font-sans, sans-serif); background: transparent; }
 }
 
 /* Mobile joystick */
-.mobile-joy { position: absolute; left: 14px; bottom: 14px; z-index: 60; display: none; user-select: none; }
-.mobile-joy .joy-row { display:flex; gap:8px; justify-content:center; margin-top:6px; }
-.mobile-joy .joy-btn { width:44px; height:44px; border-radius:10px; background: rgba(255,255,255,0.04); border:1px solid rgba(93,202,165,0.12); color:#EAFBF3; font-size:18px; display:inline-flex; align-items:center; justify-content:center; }
-.mobile-joy .joy-btn:active { transform: scale(0.96); opacity:0.9; }
+
+.mobile-joy { position: absolute; left: 14px; bottom: 14px; z-index: 60; display: none; user-select: none; touch-action: none; }
+.joy-outer { width: 120px; height: 120px; border-radius: 50%; background: rgba(255,255,255,0.03); border: 2px solid rgba(93,202,165,0.08); display:flex; align-items:center; justify-content:center; }
+.joy-knob { width: 56px; height: 56px; border-radius: 50%; background: rgba(93,202,165,0.16); border: 2px solid #5DCAA5; box-shadow: 0 6px 18px rgba(13,52,40,0.35); touch-action: none; }
 
 @media (max-width: 700px) {
   .mobile-joy { display: block; }
