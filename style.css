@@ -44,6 +44,7 @@ body { font-family: var(--font-sans, sans-serif); background: transparent; }
 .dd-item { background: rgba(83,74,183,0.3); border: 1.5px solid #7F77DD; border-radius: 8px; padding: 8px 12px; margin-bottom: 8px; font-size: 13px; color: #EEEDFE; cursor: grab; user-select: none; transition: all 0.15s; }
 .dd-item:active { cursor: grabbing; opacity: 0.7; transform: scale(0.97); }
 .dd-item.dragging { opacity: 0.4; }
+.dd-item { touch-action: none; }
 .dd-zone { border: 2px dashed rgba(93,202,165,0.3); border-radius: 10px; padding: 10px; margin-bottom: 10px; min-height: 52px; transition: all 0.2s; background: rgba(0,0,0,0.2); }
 .dd-zone.drag-over { border-color: #5DCAA5; background: rgba(93,202,165,0.08); }
 .dd-zone-label { font-size: 12px; color: #5DCAA5; margin-bottom: 6px; font-weight: 500; }
@@ -88,3 +89,17 @@ body { font-family: var(--font-sans, sans-serif); background: transparent; }
   .dd-layout { flex-direction: column; }
   .dd-items-bank, .dd-zones { min-width: unset; }
 }
+
+/* Mobile joystick */
+.mobile-joy { position: absolute; left: 14px; bottom: 14px; z-index: 60; display: none; user-select: none; }
+.mobile-joy .joy-row { display:flex; gap:8px; justify-content:center; margin-top:6px; }
+.mobile-joy .joy-btn { width:44px; height:44px; border-radius:10px; background: rgba(255,255,255,0.04); border:1px solid rgba(93,202,165,0.12); color:#EAFBF3; font-size:18px; display:inline-flex; align-items:center; justify-content:center; }
+.mobile-joy .joy-btn:active { transform: scale(0.96); opacity:0.9; }
+
+@media (max-width: 700px) {
+  .mobile-joy { display: block; }
+  #arena-canvas { height: 320px; }
+}
+
+/* Player name input styling adjustments */
+#player-name { outline: none; }

@@ -14,6 +14,9 @@
     <div class="menu-title">🧬 BioQuest</div>
     <div class="menu-sub">Genetika & Metabolisme Mikrobiologi</div>
     <div class="menu-desc">Jelajahi dunia sel! Gerakkan karakter dengan <b style="color:#5DCAA5">WASD</b> untuk memilih jawaban, atau gunakan mode <b style="color:#7F77DD">Drag & Drop</b> interaktif.</div>
+    <div style="margin:0.6rem 0; text-align:center;">
+        <input id="player-name" type="text" placeholder="Masukkan nama kamu" style="padding:8px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.02); color:#EAFBF3; width:220px;">
+    </div>
     <div class="mode-cards">
         <div class="mode-card selected" onclick="selectMode('arena')" id="mode-arena">
             <div class="mode-icon">🕹️</div>
@@ -44,6 +47,15 @@
         <span class="key-hint"><b>S</b> Bawah</span>
         <span class="key-hint"><b>D</b> Kanan</span>
         <span class="key-hint">Sentuh kartu untuk jawab</span>
+    </div>
+    <!-- Mobile joystick -->
+    <div id="mobile-joy" class="mobile-joy" aria-hidden="false">
+        <button class="joy-btn" id="joy-up">▲</button>
+        <div class="joy-row">
+            <button class="joy-btn" id="joy-left">◀</button>
+            <button class="joy-btn" id="joy-down">▼</button>
+            <button class="joy-btn" id="joy-right">▶</button>
+        </div>
     </div>
     <div class="prize-popup" id="prize-popup">
         <div class="pp-title">🎉 BENAR!</div>
@@ -80,6 +92,7 @@
     <div class="result-box">
         <div class="result-emoji" id="res-emoji">🎉</div>
         <div class="result-title" id="res-title">Selamat!</div>
+        <div class="result-player" id="res-player" style="color:#9FE1CB;margin-bottom:8px;font-weight:600"></div>
         <div class="result-msg" id="res-msg">Kamu hebat!</div>
         <div class="result-stats">
             <div class="stat-chip"><div class="sv" id="res-score">0</div><div class="sl">Total Skor</div></div>

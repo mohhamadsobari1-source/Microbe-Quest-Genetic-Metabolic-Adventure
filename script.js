@@ -54,6 +54,7 @@ let ddCurrentIdx = 0;
 let ddScore = 0, ddWrong = 0;
 let currentObstacle = false;
 let animFrame;
+let playerName = '';
 
 const CANVAS_W = 640, CANVAS_H = 420;
 const CARD_W = 130, CARD_H = 52;
@@ -74,6 +75,9 @@ function selectMode(m) {
 
 function startGame() {
   score = 0; lives = 3; correct = 0; wrong = 0; currentQ = 0;
+  // Read player name input (optional)
+  const pn = document.getElementById('player-name');
+  playerName = pn && pn.value.trim() ? pn.value.trim() : 'Pemain';
   if (gameMode === 'arena') {
     showScreen('arena');
     loadArenaQ();
@@ -408,6 +412,8 @@ function loadDDQ() {
     zEl.addEventListener('dragover', e => { e.preventDefault(); zEl.classList.add('drag-over'); });
     zEl.addEventListener('dragleave', () => zEl.classList.remove('drag-over'));
     zEl.addEventListener('drop', e => { e.preventDefault(); zEl.classList.remove('drag-over'); dropToZone(zEl); });
+    // pointer support for touch devices
+    zEl.addEventListener('pointerup', e => { e.preventDefault(); zEl.classList.remove('drag-over'); dropToZone(zEl); });
     zonesC.appendChild(zEl);
   });
 }
@@ -425,6 +431,10 @@ function createDDItem(text, origin) {
     el.classList.add('dragging');
     e.dataTransfer.effectAllowed = 'move';
   });
+  // Pointer support: set drag origin for touch/pointer interactions
+  el.addEventListener('pointerdown', e => { dragItem = text; dragOrigin = el.parentElement; el.classList.add('dragging'); e.preventDefault(); });
+  el.addEventListener('pointerup', e => { /* pointerup handled by zone/bank handlers */ });
+  el.addEventListener('pointercancel', () => { dragItem = null; dragOrigin = null; el.classList.remove('dragging'); });
   el.addEventListener('dragend', () => el.classList.remove('dragging'));
   return el;
 }
@@ -457,6 +467,18 @@ document.getElementById('dd-bank').addEventListener('drop', e => {
   const newEl = createDDItem(dragItem, 'bank');
   document.getElementById('dd-bank').appendChild(newEl);
   dragItem = null;
+});
+// pointerup on bank to support touch devices
+document.getElementById('dd-bank').addEventListener('pointerup', e => {
+  e.preventDefault();
+  if (!dragItem) return;
+  document.querySelectorAll('.dd-zone').forEach(z => {
+    const it = z.querySelector(`[data-item="${CSS.escape(dragItem)}"]`);
+    if (it) it.remove();
+  });
+  const newEl = createDDItem(dragItem, 'bank');
+  document.getElementById('dd-bank').appendChild(newEl);
+  dragItem = null; dragOrigin = null;
 });
 
 function checkDragDrop() {
@@ -516,6 +538,9 @@ function showResult(mode) {
   document.getElementById('res-emoji').textContent = isGood ? '🏆' : '💪';
   document.getElementById('res-title').textContent = isGood ? 'Luar Biasa!' : 'Terus Belajar!';
   document.getElementById('res-title').className = 'result-title ' + (isGood ? 'win' : 'lose');
+  // show player name if provided
+  const rp = document.getElementById('res-player');
+  if (rp) rp.textContent = playerName ? `Pemain: ${playerName}` : '';
   document.getElementById('res-msg').textContent = isGood
     ? 'Kamu menguasai Genetika & Metabolisme Mikrobiologi dengan sangat baik! Skor tinggi terkumpul!'
     : 'Jangan menyerah! Setiap percobaan membuat kamu lebih paham ilmu biologi sel. Coba lagi!';
@@ -533,6 +558,20 @@ window.checkDragDrop = checkDragDrop;
 // Movement keys (already used by loop)
 document.addEventListener('keydown', e => { keys[e.key.toLowerCase()] = true; if (['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright'].includes(e.key.toLowerCase())) e.preventDefault(); });
 document.addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
+
+// Mobile joystick buttons
+function bindJoyBtn(id, key) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.addEventListener('pointerdown', e => { keys[key] = true; e.preventDefault(); });
+  el.addEventListener('pointerup', e => { keys[key] = false; e.preventDefault(); });
+  el.addEventListener('pointercancel', e => { keys[key] = false; });
+  el.addEventListener('pointerleave', e => { keys[key] = false; });
+}
+bindJoyBtn('joy-up', 'w');
+bindJoyBtn('joy-left', 'a');
+bindJoyBtn('joy-down', 's');
+bindJoyBtn('joy-right', 'd');
 
 // Initialize default menu state
 showScreen('menu');
