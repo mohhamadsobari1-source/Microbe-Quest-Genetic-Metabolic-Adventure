@@ -28,8 +28,10 @@ h1 {
 }
 
 #game-container {
-  width: min(100%, 980px);
-  background: rgba(15, 25, 45, 0.95);
+  width: 100%;
+  max-width: 980px;
+  margin: 0 auto;
+  background: rgba(15, 25, 45, 0.98);
   border: 1px solid rgba(255,255,255,0.08);
   border-radius: 22px;
   overflow: hidden;
@@ -60,12 +62,16 @@ h1 {
 }
 
 .question-box {
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 18px;
-  padding: 18px;
-  margin-bottom: 22px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 14px;
+  padding: 22px;
+  margin-bottom: 18px;
   color: #e1efff;
+  min-height: 160px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 #canvas-zone {
@@ -115,6 +121,20 @@ h1 {
   font-size: 32px;
   transition: transform 0.1s ease-out;
   user-select: none;
+}
+
+.start-screen .question-box {
+  min-height: 260px;
+}
+
+/* Full-screen feeling: make the question area prominent and centered */
+#quiz-screen .question-box {
+  min-height: 22vh;
+  padding: 26px;
+}
+
+#game-container .screen {
+  padding: 28px;
 }
 
 .question-box.centered {

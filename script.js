@@ -39,9 +39,15 @@ let current = 0;
 let score = 0;
 let acceptingInput = true;
 let pointerId = null;
+let gameStarted = false;
+let keysDown = { w:false, a:false, s:false, d:false };
+let joystickVector = { x:0, y:0 };
+let joystickActive = false;
+let rafId = null;
 
 function init() {
   document.body.classList.toggle('mobile', isMobile());
+  bindStart();
   bindKeyboard();
   bindJoystick();
   bindOptionClicks();
@@ -66,7 +72,7 @@ function renderQuestion() {
 function bindOptionClicks() {
   [gateA, gateB, gateC, gateD].forEach(el => {
     el.addEventListener('click', () => {
-      if (!acceptingInput) return;
+      if (!acceptingInput || !gameStarted) return;
       handleChoice(el.dataset.option);
     });
   });
@@ -75,13 +81,20 @@ function bindOptionClicks() {
 // Keyboard controls (W/A/S/D) -> choose A/B/C/D respectively
 // Dokumentasi: event listener ini menangani input keyboard dari pengguna desktop.
 function bindKeyboard() {
+  // Keyboard controls for movement: WASD
   window.addEventListener('keydown', (e) => {
-    if (!acceptingInput) return;
     const k = e.key.toLowerCase();
-    if (k === 'w') return handleChoice('A');
-    if (k === 'a') return handleChoice('B');
-    if (k === 's') return handleChoice('C');
-    if (k === 'd') return handleChoice('D');
+    if (k === 'w' || k === 'arrowup') keysDown.w = true;
+    if (k === 'a' || k === 'arrowleft') keysDown.a = true;
+    if (k === 's' || k === 'arrowdown') keysDown.s = true;
+    if (k === 'd' || k === 'arrowright') keysDown.d = true;
+  });
+  window.addEventListener('keyup', (e) => {
+    const k = e.key.toLowerCase();
+    if (k === 'w' || k === 'arrowup') keysDown.w = false;
+    if (k === 'a' || k === 'arrowleft') keysDown.a = false;
+    if (k === 's' || k === 'arrowdown') keysDown.s = false;
+    if (k === 'd' || k === 'arrowright') keysDown.d = false;
   });
 }
 
@@ -95,6 +108,7 @@ function bindJoystick() {
     if (pointerId !== null) return;
     pointerId = ev.pointerId;
     joystickBase.setPointerCapture(pointerId);
+    joystickActive = true;
     processJoystick(ev);
   });
   joystickBase.addEventListener('pointermove', (ev) => {
@@ -103,25 +117,9 @@ function bindJoystick() {
   });
   const release = (ev) => {
     if (ev.pointerId !== pointerId) return;
-    // determine final direction
-    const rect = joystickBase.getBoundingClientRect();
-    const cx = rect.left + rect.width/2;
-    const cy = rect.top + rect.height/2;
-    const dx = ev.clientX - cx;
-    const dy = ev.clientY - cy;
-    const absX = Math.abs(dx);
-    const absY = Math.abs(dy);
-    // threshold to avoid accidental taps
-    if (Math.hypot(dx,dy) > 20) {
-      let choice = null;
-      if (absX > absY) {
-        choice = dx > 0 ? 'D' : 'B';
-      } else {
-        choice = dy < 0 ? 'A' : 'C';
-      }
-      if (choice && acceptingInput) handleChoice(choice);
-    }
-    // reset thumb
+    // on release stop moving
+    joystickActive = false;
+    joystickVector = { x:0, y:0 };
     joystickThumb.style.transform = 'translate(0,0)';
     pointerId = null;
   };
@@ -141,6 +139,8 @@ function processJoystick(ev) {
   const clampedX = (dx / Math.max(dist,1)) * Math.min(dist, max);
   const clampedY = (dy / Math.max(dist,1)) * Math.min(dist, max);
   joystickThumb.style.transform = `translate(${clampedX}px, ${clampedY}px)`;
+  joystickVector.x = clampedX / max;
+  joystickVector.y = clampedY / max;
 }
 
 function handleChoice(choice) {
@@ -161,11 +161,14 @@ function handleChoice(choice) {
   // next
   setTimeout(() => {
     current++;
+    acceptingInput = true;
     if (current >= questions.length) {
       endQuiz();
     } else {
       renderQuestion();
       clearHighlights();
+      // reset player position for next soal
+      resetPlayerPosition();
     }
   }, 700);
 }
@@ -205,8 +208,97 @@ function resetGame() {
   endingScreen.classList.remove('active');
   quizScreen.classList.add('active');
   renderQuestion();
+  // show start screen again
+  const start = document.getElementById('start-screen');
+  start.classList.add('active');
+  quizScreen.classList.remove('active');
+  gameStarted = false;
 }
 
 window.resetGame = resetGame;
 
+function bindStart() {
+  const start = document.getElementById('start-screen');
+  const nameInput = document.getElementById('start-name');
+  const startBtn = document.getElementById('start-btn');
+  startBtn.addEventListener('click', () => {
+    const name = nameInput.value.trim();
+    if (!name) {
+      nameInput.focus();
+      return;
+    }
+    document.getElementById('player-name').value = name || '';
+    // hide start, show quiz
+    start.classList.remove('active');
+    document.getElementById('quiz-screen').classList.add('active');
+    gameStarted = true;
+    resetPlayerPosition();
+    // start animation loop
+    if (!rafId) rafId = requestAnimationFrame(mainLoop);
+  });
+}
+
+function mainLoop() {
+  // movement only when game started and quiz active
+  if (gameStarted && document.getElementById('quiz-screen').classList.contains('active')) {
+    const speed = 3.8;
+    let dx = 0, dy = 0;
+    if (keysDown.w) dy -= speed;
+    if (keysDown.s) dy += speed;
+    if (keysDown.a) dx -= speed;
+    if (keysDown.d) dx += speed;
+    if (joystickActive) {
+      dx += joystickVector.x * speed * 1.4;
+      dy += joystickVector.y * speed * 1.4;
+    }
+    if (dx !== 0 || dy !== 0) movePlayer(dx, dy);
+    // check collisions with gates
+    checkGateCollisions();
+  }
+  rafId = requestAnimationFrame(mainLoop);
+}
+
+// movement helpers
+let playerPos = { x:0, y:0 };
+function resetPlayerPosition() {
+  const zoneRect = document.getElementById('canvas-zone').getBoundingClientRect();
+  const p = document.getElementById('player');
+  playerPos.x = zoneRect.left + zoneRect.width/2 - (p.offsetWidth/2);
+  playerPos.y = zoneRect.top + zoneRect.height - 120;
+  // place absolute relative to container
+  p.style.position = 'absolute';
+  p.style.left = `${playerPos.x - zoneRect.left}px`;
+  p.style.top = `${playerPos.y - zoneRect.top}px`;
+}
+
+function movePlayer(dx, dy) {
+  const zone = document.getElementById('canvas-zone');
+  const zoneRect = zone.getBoundingClientRect();
+  const p = document.getElementById('player');
+  const playerRect = p.getBoundingClientRect();
+  let newX = (playerRect.left - zoneRect.left) + dx;
+  let newY = (playerRect.top - zoneRect.top) + dy;
+  newX = Math.max(0, Math.min(newX, zoneRect.width - playerRect.width));
+  newY = Math.max(0, Math.min(newY, zoneRect.height - playerRect.height));
+  p.style.left = `${newX}px`;
+  p.style.top = `${newY}px`;
+}
+
+function checkGateCollisions() {
+  if (!acceptingInput) return;
+  const p = document.getElementById('player');
+  const playerRect = p.getBoundingClientRect();
+  const gates = [gateA, gateB, gateC, gateD];
+  for (const g of gates) {
+    if (!g) continue;
+    const gr = g.getBoundingClientRect();
+    if (!(playerRect.right < gr.left || playerRect.left > gr.right || playerRect.bottom < gr.top || playerRect.top > gr.bottom)) {
+      // collision
+      handleChoice(g.dataset.option);
+      break;
+    }
+  }
+}
+
+// Initialize after definitions
 init();

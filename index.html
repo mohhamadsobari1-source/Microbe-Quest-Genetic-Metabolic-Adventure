@@ -11,6 +11,16 @@
     <h1>Microbe Quest: Genetic & Metabolic Adventure</h1>
 
     <div id="game-container">
+        <div id="start-screen" class="screen start-screen active">
+            <div class="question-box centered">
+                <h2>Selamat Datang, Peneliti Muda!</h2>
+                <p style="margin-top:8px;">Masukkan nama Anda untuk memulai misi penyelidikan bakteri resisten antibiotik.</p>
+                <div style="margin-top:16px;">
+                    <input id="start-name" type="text" placeholder="Nama Anda" style="padding:10px 12px; border-radius:10px; width:220px;">
+                    <button id="start-btn" type="button" style="margin-left:12px;">Mulai</button>
+                </div>
+            </div>
+        </div>
         <div class="info-bar">
             <div id="control-hint">Fitur Kontrol: <span id="control-method">W-A-S-D</span></div>
             <div>Skor: <span id="score-count" style="color: #ffb423;">0</span> / 150</div>
@@ -24,7 +34,7 @@
             </div>
         </div>
 
-        <div id="quiz-screen" class="screen active">
+        <div id="quiz-screen" class="screen">
             <div class="question-box">
                 <div id="question-index">Soal 1 / 15</div>
                 <div id="question-text" style="margin-top:8px; font-size:18px; font-weight:700;"></div>
